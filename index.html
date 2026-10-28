@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Names Wheel — @promptlikeglam Live — Oct 28, 2026</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(160deg, #0b1026 0%, #12245e 45%, #1d3a8a 75%, #0b1026 100%);
+    color:#fdfdff; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:24px 12px 40px; overflow-x:hidden;
+  }
+  h1 {
+    font-size:clamp(22px,4.5vw,38px); font-weight:800; text-align:center; letter-spacing:.5px;
+    background: linear-gradient(90deg,#bcd7ff,#ffffff,#ffb7e2,#bcd7ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:none; margin-bottom:4px;
+  }
+  .sub { text-align:center; color:#cfe0ff; font-size:clamp(13px,2.5vw,17px); margin-bottom:18px; }
+  .wheel-wrap { position:relative; width:min(88vw,520px); aspect-ratio:1/1; }
+  canvas#wheel { width:100%; height:100%; display:block; filter: drop-shadow(0 18px 40px rgba(0,0,0,.55)); }
+  .pointer {
+    position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent;
+    border-top:30px solid #ffd75e; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); z-index:3;
+  }
+  .hub {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:22%; height:22%; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #c9d9ff 55%, #7ea6f2);
+    border:4px solid #ffd75e; display:flex; align-items:center; justify-content:center;
+    font-size:clamp(22px,5vw,34px); z-index:2; box-shadow:0 6px 18px rgba(0,0,0,.45);
+  }
+  button#spin {
+    margin-top:22px; padding:16px 54px; font-size:clamp(18px,3.5vw,24px); font-weight:800; letter-spacing:2px;
+    color:#12245e; background:linear-gradient(180deg,#ffe98a,#ffd75e 55%,#f5b921);
+    border:none; border-radius:999px; cursor:pointer; box-shadow:0 10px 24px rgba(0,0,0,.45), inset 0 2px 0 #fff8d6;
+    transition: transform .12s ease, filter .12s ease;
+  }
+  button#spin:hover:not(:disabled){ transform:scale(1.04); filter:brightness(1.05); }
+  button#spin:disabled{ opacity:.55; cursor:wait; }
+  #winner {
+    margin-top:22px; min-height:64px; text-align:center; font-weight:800;
+    font-size:clamp(22px,5vw,40px); color:#fff; opacity:0; transform:scale(.8);
+    transition: opacity .35s ease, transform .35s ease; padding:0 10px;
+  }
+  #winner.show { opacity:1; transform:scale(1); }
+  #winner .name {
+    background: linear-gradient(90deg,#ffd75e,#ffb7e2,#bcd7ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .names { margin-top:10px; color:#aebfec; font-size:13px; text-align:center; max-width:640px; line-height:1.7; }
+  canvas#confetti { position:fixed; inset:0; pointer-events:none; z-index:10; }
+</style>
+</head>
+<body>
+  <h1>🦋 Names Wheel 🦋</h1>
+  <div class="sub">@promptlikeglam LIVE — Wednesday, October 28, 2026<br>Everyone who commented in the 20-minute window is on the wheel!</div>
+
+  <div class="wheel-wrap">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="900" height="900"></canvas>
+    <div class="hub">🦋</div>
+  </div>
+
+  <button id="spin">SPIN</button>
+  <div id="winner"></div>
+  <div class="names" id="namelist"></div>
+  <canvas id="confetti"></canvas>
+
+<script>
+  const NAMES = [
+    "krownzdigitalempire",
+    "KBKSQUAD",
+    "PrettyPlannerLuxe",
+    "COLORFUL CREATIONS by KJ",
+    "Sassy Scribbles",
+    "For Your Journey Creative Co.",
+    "Homebabe333",
+    "spyceeness❌",
+    "Maunykah"
+  ];
+  const COLORS = ["#2f6df6","#ff7ac2","#7ea6f2","#ffd75e","#4a90d9","#c084fc","#38b6a5","#f28bb4","#5b8cff"];
+  const cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
+  const W = cv.width, C = W/2, R = C - 14;
+  let angle = 0, spinning = false;
+
+  document.getElementById('namelist').textContent = NAMES.length + " names on the wheel: " + NAMES.join(" • ");
+
+  function draw() {
+    ctx.clearRect(0,0,W,W);
+    const step = Math.PI*2 / NAMES.length;
+    for (let i=0;i<NAMES.length;i++){
+      const a0 = angle + i*step, a1 = a0 + step;
+      ctx.beginPath(); ctx.moveTo(C,C); ctx.arc(C,C,R,a0,a1); ctx.closePath();
+      ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 3; ctx.stroke();
+      ctx.save();
+      ctx.translate(C,C); ctx.rotate(a0 + step/2);
+      ctx.textAlign = "right"; ctx.fillStyle = "#ffffff";
+      ctx.font = "700 25px 'Segoe UI', sans-serif";
+      ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 5;
+      let label = NAMES[i];
+      const max = 21;
+      if (label.length > max) label = label.slice(0, max-1) + "…";
+      ctx.fillText(label, R - 22, 9);
+      ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(C,C,R,0,Math.PI*2);
+    ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 10; ctx.stroke();
+  }
+  draw();
+
+  // confetti
+  const cf = document.getElementById('confetti'), cx = cf.getContext('2d');
+  let pieces = [], confettiRunning = false;
+  function sizeConfetti(){ cf.width = innerWidth; cf.height = innerHeight; }
+  sizeConfetti(); addEventListener('resize', sizeConfetti);
+  function burst(){
+    const cols = ["#ffd75e","#ff7ac2","#7ea6f2","#ffffff","#38b6a5"];
+    for (let i=0;i<180;i++){
+      pieces.push({ x: Math.random()*cf.width, y: -20 - Math.random()*cf.height*0.3,
+        w: 6+Math.random()*7, h: 8+Math.random()*9, vy: 2.2+Math.random()*3.4,
+        vx: -1.4+Math.random()*2.8, rot: Math.random()*Math.PI, vr: -0.12+Math.random()*0.24,
+        color: cols[i % cols.length] });
+    }
+    if (!confettiRunning){ confettiRunning = true; requestAnimationFrame(confettiStep); }
+  }
+  function confettiStep(){
+    cx.clearRect(0,0,cf.width,cf.height);
+    pieces = pieces.filter(p => p.y < cf.height + 30);
+    for (const p of pieces){
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot);
+      cx.fillStyle = p.color; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cx.restore();
+    }
+    if (pieces.length){ requestAnimationFrame(confettiStep); }
+    else { confettiRunning = false; cx.clearRect(0,0,cf.width,cf.height); }
+  }
+
+  document.getElementById('spin').addEventListener('click', () => {
+    if (spinning) return;
+    spinning = true;
+    const btn = document.getElementById('spin'); btn.disabled = true;
+    const win = document.getElementById('winner'); win.className = ""; win.textContent = "";
+    const step = Math.PI*2 / NAMES.length;
+    const targetIdx = Math.floor(Math.random()*NAMES.length);
+    // land the winning slice centered under the top pointer (-90deg)
+    const want = -Math.PI/2 - (targetIdx*step + step/2);
+    let delta = (want - angle) % (Math.PI*2);
+    if (delta < 0) delta += Math.PI*2;
+    const total = Math.PI*2*6 + delta;
+    const start = angle, dur = 5200, t0 = performance.now();
+    function frame(t){
+      const k = Math.min(1, (t - t0)/dur);
+      const ease = 1 - Math.pow(1-k, 4);
+      angle = start + total*ease;
+      draw();
+      if (k < 1) requestAnimationFrame(frame);
+      else {
+        angle = start + total; draw();
+        spinning = false; btn.disabled = false;
+        win.innerHTML = "🎉 WINNER: <span class='name'>" + NAMES[targetIdx].replace(/</g,"&lt;") + "</span> 🎉";
+        win.className = "show";
+        burst();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+</script>
+</body>
+</html>
